@@ -141,7 +141,14 @@ function pullCloud(){
   }).catch(function(){});
 }
 var pullTimer=null;
-function startAutoPull(){if(pullTimer)clearInterval(pullTimer);pullTimer=setInterval(pullCloud,20000);}
+// 切回前台/切主人公/窗口获焦时立即拉云端最新；若从未确认过云端则重新 loadData
+function syncNow(){
+  var now=Date.now();
+  if(syncNow._last&&now-syncNow._last<1500)return; // 1.5s 内不重复发请求
+  syncNow._last=now;
+  if(cloudConfirmed)pullCloud(); else loadData();
+}
+function startAutoPull(){if(pullTimer)clearInterval(pullTimer);pullTimer=setInterval(pullCloud,10000);}
 function ownerSwitchHtml(){
   return '<div class="owner-switch"><span class="owner-switch-label">👤 主人公</span>'+
     '<button class="owner-btn'+(currentOwner==='小张'?' active':'')+'" data-owner="小张" onclick="setOwner(\'小张\')">小张</button>'+
@@ -159,6 +166,7 @@ function setOwner(o){
   if(DETAIL_RENDERED.fitness&&currentView==='fitness')buildFitnessView();
   if(DETAIL_RENDERED.accounting&&currentView==='accounting'){acctCalDate=new Date();buildAcctView();}
   renderDashboard();
+  syncNow(); // 切主人公立即同步云端，避免看到旧数据而重复记账
 }
 
 // ===== GitHub Gist Cloud Sync（直连，稳定可靠） =====
@@ -948,5 +956,8 @@ updateSidebarDate();
 loadData().then(function(){
   renderDashboard();
   startAutoPull();
+  // 页面从后台切回前台 / 窗口重新获焦时，立即拉一次云端，消除"开着但没同步"的空窗
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')syncNow();});
+  window.addEventListener('focus',syncNow);
 });
 renderDashboard();
