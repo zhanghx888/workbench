@@ -21,7 +21,7 @@ try{if(localStorage.getItem('wb_cloud_ok')==='1')cloudConfirmed=true}catch(e){}
 function cloudOk(){try{return localStorage.getItem('wb_cloud_ok')==='1'}catch(e){return false}}
 
 // 应用版本号：若本地缓存是旧版数据，直接丢弃，避免旧版把已删记录“复活”
-var APP_VERSION='v5';
+var APP_VERSION='v6';
 try{
   var storedVer=localStorage.getItem('wb_app_version');
   if(storedVer!==APP_VERSION){
@@ -204,7 +204,7 @@ function setOwner(o){
 // ===== GitHub Gist Cloud Sync（直连，稳定可靠） =====
 var GIST_ID='04285c2f07f4da91646f8130ac3861f3';
 var GIST_TOKEN='ghp_6Snp8pM73'+'Ly5uWMh07t1g'+'ShJwAH1X93VuDD2';
-var GIST_FILE='workbench-data-v2.json';
+var GIST_FILE='workbench-data-v3.json';
 
 // ===== Utilities =====
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
