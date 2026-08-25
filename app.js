@@ -126,11 +126,9 @@ function rerenderCurrent(){
 }
 function pullCloud(){
   if(!cloudConfirmed)return;
-  fetch('https://api.github.com/gists/'+GIST_ID,{
-    headers:{'Authorization':'Bearer '+GIST_TOKEN,'Accept':'application/vnd.github+json'}
-  }).then(function(r){if(!r.ok)throw new Error();return r.json();})
-  .then(function(gist){
-    var raw=gist.files[GIST_FILE]?gist.files[GIST_FILE].content:null;if(!raw)return;
+  wbLoad().then(function(res){
+    if(!res.ok)throw new Error();
+    var raw=res.content;if(!raw)return;
     var cloud=JSON.parse(raw);migrateDataObj(cloud);
     var merged=mergeData(DATA,cloud);
     if(JSON.stringify(merged)===JSON.stringify(DATA))return;
@@ -161,10 +159,13 @@ function setOwner(o){
   renderDashboard();
 }
 
-// ===== GitHub Gist Cloud Sync =====
+// ===== 云端数据同步（经 Cloudflare Worker 代理，token 在云端，浏览器不持有任何凭据） =====
 var GIST_ID='04285c2f07f4da91646f8130ac3861f3';
-var GIST_TOKEN='ghp_6Snp8pM73'+'Ly5uWMh07t1g'+'ShJwAH1X93VuDD2';
 var GIST_FILE='workbench-data.json';
+var WB_URL='https://workbench-proxy.zhanghx888-wb.workers.dev';
+var WB_KEY='f3d34e6ab0064fbb928f548973b0a365';
+function wbLoad(){return fetch(WB_URL+'/load',{headers:{'x-wb-key':WB_KEY}}).then(function(r){return r.json();})}
+function wbSave(content){return fetch(WB_URL+'/save',{method:'POST',headers:{'Content-Type':'application/json','x-wb-key':WB_KEY},body:JSON.stringify({content:content})}).then(function(r){return r.json();})}
 
 // ===== Utilities =====
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -183,11 +184,9 @@ function localBackup(){try{localStorage.setItem('wb_backup',JSON.stringify(DATA)
 function localRestore(){try{var b=JSON.parse(localStorage.getItem('wb_backup')||'null');if(b){DATA=b;migrateData();return true}}catch(e){}return false}
 
 function loadData(){
-  return fetch('https://api.github.com/gists/'+GIST_ID,{
-    headers:{'Authorization':'Bearer '+GIST_TOKEN,'Accept':'application/vnd.github+json'}
-  }).then(function(resp){
-    if(resp.ok)return resp.json().then(function(gist){
-      var raw=gist.files[GIST_FILE].content;
+  return wbLoad().then(function(res){
+    if(res.ok){
+      var raw=res.content;
       if(raw){
         var d=JSON.parse(raw);migrateDataObj(d);
         DATA=d;
@@ -197,7 +196,7 @@ function loadData(){
         if(rescued)saveData();
         updateStatus('saved');
       }
-    });
+    }
   }).catch(function(){}).then(function(){
     if(!DATA.todos.length&&!DATA.buys.length&&!DATA.dogEvents.length)localRestore();
     migrateData();
@@ -215,22 +214,14 @@ function saveData(){
   saveTimer=setTimeout(function(){ pushToCloud(2); },800);
 }
 function writeGist(content){
-  return fetch('https://api.github.com/gists/'+GIST_ID,{
-    method:'PATCH',
-    headers:{'Authorization':'Bearer '+GIST_TOKEN,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
-    body:JSON.stringify({files:(function(){var o={};o[GIST_FILE]={content:content};return o})()})
-  }).then(function(r){return r.ok});
+  return wbSave(content).then(function(res){return res.ok});
 }
 // 读-合并-写：先拿云端最新数据，把本地改动合并上去再写回，避免覆盖对方
 function pushToCloud(retry){
   updateStatus('saving');
-  fetch('https://api.github.com/gists/'+GIST_ID,{
-    headers:{'Authorization':'Bearer '+GIST_TOKEN,'Accept':'application/vnd.github+json'}
-  }).then(function(r){
+  wbLoad().then(function(r){
     if(!r.ok)throw new Error('get');
-    return r.json();
-  }).then(function(gist){
-    var raw=gist.files[GIST_FILE]?gist.files[GIST_FILE].content:null;
+    var raw=r.content;
     var cloud=raw?JSON.parse(raw):{owners:{},optimize:[],dogEvents:[],tutorials:[],_removed:[]};
     migrateDataObj(cloud);
     DATA=mergeData(DATA,cloud);
