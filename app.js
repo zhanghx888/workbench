@@ -20,6 +20,17 @@ var cloudConfirmed=false;
 try{if(localStorage.getItem('wb_cloud_ok')==='1')cloudConfirmed=true}catch(e){}
 function cloudOk(){try{return localStorage.getItem('wb_cloud_ok')==='1'}catch(e){return false}}
 
+// 应用版本号：若本地缓存是旧版数据，直接丢弃，避免旧版把已删记录“复活”
+var APP_VERSION='v3';
+try{
+  var storedVer=localStorage.getItem('wb_app_version');
+  if(storedVer!==APP_VERSION){
+    localStorage.removeItem('wb_backup');
+    localStorage.removeItem('wb_cloud_ok');
+    localStorage.setItem('wb_app_version',APP_VERSION);
+  }
+}catch(e){}
+
 // ===== Multi-owner (小张 / 小刘) =====
 var currentOwner='小张';
 try{var _co=localStorage.getItem('wb_owner');if(_co==='小张'||_co==='小刘')currentOwner=_co}catch(e){}
@@ -115,7 +126,7 @@ function rescueLocal(){
       var bArr=getColl(b,c),dArr=getColl(DATA,c);
       var ids={};dArr.forEach(function(it){if(it&&it.id!=null)ids[it.id]=1;});
       var key=c.owner?(c.owner+':'+c.key):c.key;
-      var add=bArr.filter(function(it){return it&&it.id!=null&&!ids[it.id]&&lbRemoved.indexOf(key+':'+it.id)<0;});
+      var add=bArr.filter(function(it){return it&&it.id!=null&&!ids[it.id]&&lbRemoved.indexOf(key+':'+it.id)<0&&DATA._removed.indexOf(key+':'+it.id)<0;});
       if(add.length){setColl(DATA,c,dArr.concat(add));changed=true;}
     });
     // 2) 兜底：本地已删（墓碑）、云端仍有的，从 DATA 删除并补墓碑——避免刷新后复活
@@ -192,7 +203,7 @@ function setOwner(o){
 // ===== GitHub Gist Cloud Sync（直连，稳定可靠） =====
 var GIST_ID='04285c2f07f4da91646f8130ac3861f3';
 var GIST_TOKEN='ghp_6Snp8pM73'+'Ly5uWMh07t1g'+'ShJwAH1X93VuDD2';
-var GIST_FILE='workbench-data.json';
+var GIST_FILE='workbench-data-v2.json';
 
 // ===== Utilities =====
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -215,14 +226,23 @@ function loadData(){
     headers:{'Authorization':'Bearer '+GIST_TOKEN,'Accept':'application/vnd.github+json'}
   }).then(function(resp){
     if(resp.ok)return resp.json().then(function(gist){
-      var raw=gist.files[GIST_FILE].content;
-      if(raw){
-        var d=JSON.parse(raw);migrateDataObj(d);
+      var file=gist.files[GIST_FILE];
+      if(file&&file.content){
+        var d=JSON.parse(file.content);migrateDataObj(d);
         DATA=d;
+        // 云端和本地墓碑不一致时，按墓碑清理一次，防止已删记录残留
+        var changed=false;
+        MERGE_COLLS.forEach(function(c){
+          var key=c.owner?(c.owner+':'+c.key):c.key;
+          var arr=getColl(DATA,c);
+          var before=arr.length;
+          var filtered=arr.filter(function(it){return it&&it.id!=null&&DATA._removed.indexOf(key+':'+it.id)<0;});
+          if(filtered.length!==before){setColl(DATA,c,filtered);changed=true;}
+        });
         var rescued=rescueLocal();
         cloudConfirmed=true;try{localStorage.setItem('wb_cloud_ok','1')}catch(e){}
         localBackup();
-        if(rescued)saveData();
+        if(rescued||changed)saveData();
         updateStatus('saved');
       }
     });
