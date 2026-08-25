@@ -14,7 +14,7 @@ var acctCatFilter=null;
 var acctDetailType='expense';
 var currentView='dashboard';
 var DETAIL_RENDERED={};
-var DATA={owners:{小张:{weights:[],goal:0,exercises:[]},小刘:{weights:[],goal:0,exercises:[]}},transactions:[],spendGoals:{},spendGoal:0,spendGoalMtime:0,todos:[],buys:[],dogEvents:[],tutorials:[],optimize:[],_removed:[]};
+var DATA={owners:{小张:{weights:[],goal:0,spendGoal:0,spendGoals:{},exercises:[],transactions:[]},小刘:{weights:[],goal:0,spendGoal:0,spendGoals:{},exercises:[],transactions:[]}},todos:[],buys:[],dogEvents:[],tutorials:[],optimize:[],_removed:[]};
 var saveTimer=null;
 var cloudConfirmed=false;
 try{if(localStorage.getItem('wb_cloud_ok')==='1')cloudConfirmed=true}catch(e){}
@@ -28,34 +28,17 @@ function migrateDataObj(d){
   if(!d)d={};
   if(!d.owners)d.owners={};
   if(!d._removed)d._removed=[];
-  // 主人相关：体重/运动/体脂目标仍按主人分（个人数据）
   ['小张','小刘'].forEach(function(o){
-    if(!d.owners[o])d.owners[o]={weights:[],goal:0,exercises:[]};
+    if(!d.owners[o])d.owners[o]={weights:[],goal:0,spendGoal:0,spendGoals:{},exercises:[],transactions:[]};
     var ow=d.owners[o];
-    ['weights','exercises'].forEach(function(k){if(!ow[k])ow[k]=[]});
+    ['weights','exercises','transactions'].forEach(function(k){if(!ow[k])ow[k]=[]});
     if(ow.goal===undefined)ow.goal=0;
+    if(ow.spendGoal===undefined)ow.spendGoal=0;
     if(ow.goalMtime===undefined)ow.goalMtime=0;
-  });
-  // 记账改为家庭共享（不再按主人分开）
-  if(!d.transactions)d.transactions=[];
-  if(!d.spendGoals)d.spendGoals={};
-  if(d.spendGoal===undefined)d.spendGoal=0;
-  if(d.spendGoalMtime===undefined)d.spendGoalMtime=0;
-  // 迁移：把旧 per-owner 的 transactions 合并到共享 transactions（按 id 去重，mtime 大的优先）
-  ['小张','小刘'].forEach(function(o){
-    var ow=d.owners[o];if(!ow)return;
-    var oldT=ow.transactions||[];
-    oldT.forEach(function(t){if(!t.id)return;var exist=d.transactions.find(function(x){return x.id===t.id});if(exist){if((t.mtime||0)>(exist.mtime||0))Object.assign(exist,t);}else d.transactions.push(t);});
-    ow.transactions=[];
-    // 合并 spendGoals：取较大值作为家庭预算
-    var oldG=ow.spendGoals||{};
-    Object.keys(oldG).forEach(function(ym){if(d.spendGoals[ym]===undefined||oldG[ym]>d.spendGoals[ym])d.spendGoals[ym]=oldG[ym];});
-    ow.spendGoals={};
-    if(ow.spendGoal){
-      var ym='2026-07';
-      if(d.spendGoals[ym]===undefined||ow.spendGoal>d.spendGoals[ym])d.spendGoals[ym]=ow.spendGoal;
-      ow.spendGoal=0;
-    }
+    if(ow.spendGoalMtime===undefined)ow.spendGoalMtime=0;
+    if(ow.spendGoals===undefined)ow.spendGoals={};
+    // 迁移：用户曾把月目标写成全局值（如7月=5000 却影响所有月），改为按月存储，仅把原全局值落到7月
+    if(ow.spendGoal && Object.keys(ow.spendGoals).length===0){ow.spendGoals['2026-07']=ow.spendGoal;ow.spendGoal=0;}
   });
   // 迁移：待办/待买从 per-owner 改为全局共享数组，每项带 assignee（指派给小张/小刘）
   if(!d.todos)d.todos=[];
@@ -71,15 +54,15 @@ function migrateDataObj(d){
   (d.buys||[]).forEach(function(b){if(!b.assignee)b.assignee='小张';});
   if(d['weights']){d.owners['小张'].weights=d['weights'];delete d['weights']}
   if(d['exercises']){d.owners['小张'].exercises=d['exercises'];delete d['exercises']}
-  // 旧全局 transactions 已在 d.transactions
+  if(d['transactions']){d.owners['小张'].transactions=d['transactions'];delete d['transactions']}
   if(d['goal']!==undefined){d.owners['小张'].goal=d['goal'];delete d['goal']}
   if(!d.optimize)d.optimize=[];
   if(!d.dogEvents)d.dogEvents=[];
   d.tutorials=[];
   function normId(it){if(it&&typeof it.id==='number')it.id=String(it.id)}
-  [d.optimize,d.dogEvents,d.tutorials,d.todos,d.buys,d.transactions].forEach(function(arr){(arr||[]).forEach(normId)});
-  ['小张','小刘'].forEach(function(o){var ow=d.owners[o];['weights','exercises'].forEach(function(k){(ow[k]||[]).forEach(normId)});});
-  (d.transactions||[]).forEach(function(t){if(t.cat==='居家')t.cat='住房';});
+  [d.optimize,d.dogEvents,d.tutorials,d.todos,d.buys].forEach(function(arr){(arr||[]).forEach(normId)});
+  ['小张','小刘'].forEach(function(o){var ow=d.owners[o];['weights','exercises','transactions'].forEach(function(k){(ow[k]||[]).forEach(normId)});});
+  ['小张','小刘'].forEach(function(o){(d.owners[o].transactions||[]).forEach(function(t){if(t.cat==='居家')t.cat='住房'});});
 }
 function migrateData(){migrateDataObj(DATA)}
 // ===== Safe concurrent merge (多端同时编辑不互相覆盖) =====
@@ -88,9 +71,8 @@ function cloneObj(o){try{return JSON.parse(JSON.stringify(o))}catch(e){return o}
 var MERGE_COLLS=[
   {owner:null,key:'dogEvents'},{owner:null,key:'tutorials'},{owner:null,key:'optimize'},
   {owner:null,key:'todos'},{owner:null,key:'buys'},
-  {owner:null,key:'transactions'},
-  {owner:'小张',key:'weights'},{owner:'小张',key:'exercises'},
-  {owner:'小刘',key:'weights'},{owner:'小刘',key:'exercises'}
+  {owner:'小张',key:'weights'},{owner:'小张',key:'exercises'},{owner:'小张',key:'transactions'},
+  {owner:'小刘',key:'weights'},{owner:'小刘',key:'exercises'},{owner:'小刘',key:'transactions'}
 ];
 function getColl(data,c){var a=c.owner?(data.owners[c.owner]&&data.owners[c.owner][c.key]):data[c.key];return a||[]}
 function setColl(data,c,arr){if(c.owner)data.owners[c.owner][c.key]=arr;else data[c.key]=arr}
@@ -766,10 +748,10 @@ function renderAcctQuick(){
 }
 
 // ===== Accounting Detail =====
-function getMonthTs(y,m){return (DATA.transactions||[]).filter(function(t){var pd=t.date.split('-');return parseInt(pd[0])===y&&parseInt(pd[1])===m+1}).sort(function(a,b){return b.date.localeCompare(a.date)||(b.mtime||0)-(a.mtime||0)})}
+function getMonthTs(y,m){return (OD().transactions||[]).filter(function(t){var pd=t.date.split('-');return parseInt(pd[0])===y&&parseInt(pd[1])===m+1}).sort(function(a,b){return b.date.localeCompare(a.date)||(b.mtime||0)-(a.mtime||0)})}
 function getSpendGoal(y,m){
-  var ys=DATA.spendGoals;var ym=y+'-'+String(m+1).padStart(2,'0');
-  return (ys&&ys[ym]!==undefined)?ys[ym]:(DATA.spendGoal||0);
+  var ys=OD().spendGoals;var ym=y+'-'+String(m+1).padStart(2,'0');
+  return (ys&&ys[ym]!==undefined)?ys[ym]:(OD().spendGoal||0);
 }
 function monthStatsD(y,m){
   var ts=getMonthTs(y,m);
@@ -825,8 +807,8 @@ function addTransactionD(){
   var amt=parseFloat(document.getElementById('ad-amount').value);
   if(isNaN(amt)||amt<=0){alert('请输入金额');return}
   if(!desc)desc=cat;
-  DATA.transactions=DATA.transactions||[];
-  DATA.transactions.push({id:genId(),mtime:Date.now(),date:d,desc:desc,cat:cat,amount:Math.round(amt*10)/10,type:acctDetailType});
+  OD().transactions=OD().transactions||[];
+  OD().transactions.push({id:genId(),mtime:Date.now(),date:d,desc:desc,cat:cat,amount:Math.round(amt*10)/10,type:acctDetailType});
   saveData();
   document.getElementById('ad-desc').value='';
   document.getElementById('ad-amount').value='';
@@ -836,13 +818,13 @@ function setSpendGoalD(){
   var g=parseFloat(document.getElementById('ad-goal').value);
   var y=acctCalDate.getFullYear(),m=acctCalDate.getMonth();
   var ym=y+'-'+String(m+1).padStart(2,'0');
-  if(!DATA.spendGoals)DATA.spendGoals={};
-  DATA.spendGoals[ym]=(isNaN(g)||g<0)?0:g;DATA.spendGoalMtime=Date.now();
+  if(!OD().spendGoals)OD().spendGoals={};
+  OD().spendGoals[ym]=(isNaN(g)||g<0)?0:g;OD().spendGoalMtime=Date.now();
   saveData();
   var gi=document.getElementById('ad-goal');if(gi)gi.value='';
   renderAcctDetail();renderAcctQuick();
 }
-function delTransactionD(id){markRemoved('transactions',id);DATA.transactions=(DATA.transactions||[]).filter(function(x){return x.id!==id});saveData();renderAcctDetail();renderAcctQuick()}
+function delTransactionD(id){markRemoved(currentOwner+':transactions',id);OD().transactions=(OD().transactions||[]).filter(function(x){return x.id!==id});saveData();renderAcctDetail();renderAcctQuick()}
 function selectAcctDateD(ds){
   var p=ds.split('-');
   acctCalDate=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
@@ -882,7 +864,7 @@ function renderAcctCalD(y,m){
   }
   for(var d=1;d<=dim;d++){
     var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    var dayTs=(DATA.transactions||[]).filter(function(t){return t.date===ds});
+    var dayTs=(OD().transactions||[]).filter(function(t){return t.date===ds});
     var inc=dayTs.filter(function(t){return t.type==='income'}).reduce(function(s,t){return s+t.amount},0);
     var exp=dayTs.filter(function(t){return t.type==='expense'}).reduce(function(s,t){return s+t.amount},0);
     var amountHtml='';
@@ -902,7 +884,7 @@ function renderAcctCalD(y,m){
   var grid=document.getElementById('ad-cal-grid');if(grid)grid.innerHTML=html;
 }
 function renderAcctListD(y,m,dayFilter){
-  var ts=dayFilter?(DATA.transactions||[]).filter(function(t){return t.date===dayFilter}):getMonthTs(y,m);
+  var ts=dayFilter?(OD().transactions||[]).filter(function(t){return t.date===dayFilter}):getMonthTs(y,m);
   if(acctCatFilter)ts=ts.filter(function(t){return t.cat===acctCatFilter});
   ts=ts.slice().sort(function(a,b){return (b.mtime||0)-(a.mtime||0)});
   var titleEl=document.getElementById('ad-list-title');if(titleEl)titleEl.textContent=(acctCatFilter?acctCatFilter+' · ':'')+(dayFilter?dayFilter:(y+'年'+(m+1)+'月'))+' 收支明细';
