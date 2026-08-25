@@ -54,7 +54,7 @@ function migrateDataObj(d){
   (d.buys||[]).forEach(function(b){if(!b.assignee)b.assignee='小张';});
   if(d['weights']){d.owners['小张'].weights=d['weights'];delete d['weights']}
   if(d['exercises']){d.owners['小张'].exercises=d['exercises'];delete d['exercises']}
-  if(d['transactions']){d.owners['小张'].transactions=d['transactions'];delete d['transactions']}
+  // 注意：不再把顶层 transactions 归给某一人——防止旧版/损坏的本地备份把数据误归给错误的主人
   if(d['goal']!==undefined){d.owners['小张'].goal=d['goal'];delete d['goal']}
   if(!d.optimize)d.optimize=[];
   if(!d.dogEvents)d.dogEvents=[];
