@@ -21,7 +21,7 @@ try{if(localStorage.getItem('wb_cloud_ok')==='1')cloudConfirmed=true}catch(e){}
 function cloudOk(){try{return localStorage.getItem('wb_cloud_ok')==='1'}catch(e){return false}}
 
 // 应用版本号：若本地缓存是旧版数据，直接丢弃，避免旧版把已删记录“复活”
-var APP_VERSION='v4';
+var APP_VERSION='v5';
 try{
   var storedVer=localStorage.getItem('wb_app_version');
   if(storedVer!==APP_VERSION){
@@ -163,8 +163,7 @@ function pullCloud(){
   .then(function(gist){
     var raw=gist.files[GIST_FILE]?gist.files[GIST_FILE].content:null;if(!raw)return;
     var cloud=JSON.parse(raw);migrateDataObj(cloud);
-    // 兜底：合并旧文件里旧版客户端的新增，保证多端一致
-    try{var oldF=gist.files['workbench-data.json'];if(oldF&&oldF.content){var od=JSON.parse(oldF.content);migrateDataObj(od);cloud=mergeData(cloud,od);}}catch(e){}
+    // 不再合并旧文件——避免旧版客户端的脏数据污染
     var merged=mergeData(DATA,cloud);
     if(JSON.stringify(merged)===JSON.stringify(DATA))return;
     DATA=merged;localBackup();saveData();
@@ -232,8 +231,7 @@ function loadData(){
       if(file&&file.content){
         var d=JSON.parse(file.content);migrateDataObj(d);
         DATA=d;
-        // 兜底：把旧文件(workbench-data.json)里旧版客户端新增的记录也合并进来，防止某端还没刷新时漏数据
-        try{var oldF=gist.files['workbench-data.json'];if(oldF&&oldF.content){var od=JSON.parse(oldF.content);migrateDataObj(od);DATA=mergeData(DATA,od);}}catch(e){}
+        // 不再合并旧文件(workbench-data.json)——旧版客户端会持续写入脏数据，宁可丢弃也不要
         // 云端和本地墓碑不一致时，按墓碑清理一次，防止已删记录残留
         var changed=false;
         MERGE_COLLS.forEach(function(c){
@@ -290,8 +288,7 @@ function pushToCloud(retry){
     var raw=gist.files[GIST_FILE]?gist.files[GIST_FILE].content:null;
     var cloud=raw?JSON.parse(raw):{owners:{},optimize:[],dogEvents:[],tutorials:[],_removed:[]};
     migrateDataObj(cloud);
-    // 兜底：合并旧文件里旧版客户端的新增，保存时一并写回，避免漏数据
-    try{var oldF=gist.files['workbench-data.json'];if(oldF&&oldF.content){var od=JSON.parse(oldF.content);migrateDataObj(od);cloud=mergeData(cloud,od);}}catch(e){}
+    // 不再合并旧文件——避免旧版客户端的脏数据污染
     DATA=mergeData(DATA,cloud);
     localBackup();
     return writeGist(JSON.stringify(DATA));
