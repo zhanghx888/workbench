@@ -164,7 +164,7 @@ var GIST_ID='04285c2f07f4da91646f8130ac3861f3';
 var GIST_FILE='workbench-data.json';
 var WB_URL='https://workbench-proxy.zhanghx888-wb.workers.dev';
 var WB_KEY='f3d34e6ab0064fbb928f548973b0a365';
-function wbLoad(){return fetch(WB_URL+'/load',{headers:{'x-wb-key':WB_KEY}}).then(function(r){return r.json();})}
+function wbLoad(){var c=new AbortController();setTimeout(function(){c.abort()},15000);return fetch(WB_URL+'/load',{headers:{'x-wb-key':WB_KEY},signal:c.signal}).then(function(r){return r.json();}).catch(function(){return{ok:false,err:'timeout_or_net'};})}
 function wbSave(content){return fetch(WB_URL+'/save',{method:'POST',headers:{'Content-Type':'application/json','x-wb-key':WB_KEY},body:JSON.stringify({content:content})}).then(function(r){return r.json();})}
 
 // ===== Utilities =====
