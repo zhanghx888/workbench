@@ -109,15 +109,35 @@ function rescueLocal(){
   try{
     var b=JSON.parse(localStorage.getItem('wb_backup')||'null');if(!b)return false;
     migrateDataObj(b);
-    var removed=DATA._removed||[];var added=false;
+    var lbRemoved=b._removed||[];var changed=false;
+    // 1) 加回本地新增（云端无、本地有、非墓碑）
     MERGE_COLLS.forEach(function(c){
       var bArr=getColl(b,c),dArr=getColl(DATA,c);
       var ids={};dArr.forEach(function(it){if(it&&it.id!=null)ids[it.id]=1;});
       var key=c.owner?(c.owner+':'+c.key):c.key;
-      var add=bArr.filter(function(it){return it&&it.id!=null&&!ids[it.id]&&removed.indexOf(key+':'+it.id)<0;});
-      if(add.length){setColl(DATA,c,dArr.concat(add));added=true;}
+      var add=bArr.filter(function(it){return it&&it.id!=null&&!ids[it.id]&&lbRemoved.indexOf(key+':'+it.id)<0;});
+      if(add.length){setColl(DATA,c,dArr.concat(add));changed=true;}
     });
-    return added;
+    // 2) 兜底：本地已删（墓碑）、云端仍有的，从 DATA 删除并补墓碑——避免刷新后复活
+    lbRemoved.forEach(function(k){
+      if(DATA._removed.indexOf(k)<0)DATA._removed.push(k);
+      var p=k.split(':');
+      if(p.length===3){
+        var ow=DATA.owners[p[0]];
+        if(ow&&ow[p[1]]){
+          var before=ow[p[1]].length;
+          ow[p[1]]=ow[p[1]].filter(function(it){return !(it&&it.id!=null&&it.id===p[2]);});
+          if(ow[p[1]].length!==before)changed=true;
+        }
+      } else if(p.length===2){
+        if(DATA[p[0]]){
+          var b2=DATA[p[0]].length;
+          DATA[p[0]]=DATA[p[0]].filter(function(it){return !(it&&it.id!=null&&it.id===p[1]);});
+          if(DATA[p[0]].length!==b2)changed=true;
+        }
+      }
+    });
+    return changed;
   }catch(e){return false}
 }
 function rerenderCurrent(){
@@ -841,7 +861,7 @@ function setSpendGoalD(){
   var gi=document.getElementById('ad-goal');if(gi)gi.value='';
   renderAcctDetail();renderAcctQuick();
 }
-function delTransactionD(id){markRemoved(currentOwner+':transactions',id);OD().transactions=(OD().transactions||[]).filter(function(x){return x.id!==id});saveData();renderAcctDetail();renderAcctQuick()}
+function delTransactionD(id){markRemoved(currentOwner+':transactions',id);OD().transactions=(OD().transactions||[]).filter(function(x){return x.id!==id});localBackup();pushToCloud(2);renderAcctDetail();renderAcctQuick()}
 function selectAcctDateD(ds){
   var p=ds.split('-');
   acctCalDate=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
