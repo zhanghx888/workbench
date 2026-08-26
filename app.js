@@ -21,7 +21,7 @@ try{if(localStorage.getItem('wb_cloud_ok')==='1')cloudConfirmed=true}catch(e){}
 function cloudOk(){try{return localStorage.getItem('wb_cloud_ok')==='1'}catch(e){return false}}
 
 // 应用版本号：若本地缓存是旧版数据，直接丢弃，避免旧版把已删记录“复活”
-var APP_VERSION='v6';
+var APP_VERSION='v7';
 try{
   var storedVer=localStorage.getItem('wb_app_version');
   if(storedVer!==APP_VERSION){
@@ -446,7 +446,7 @@ function renderTodoQuick(){
   }else{
     var t=todos[0];
     list.innerHTML='<div class="todo-item"><input type="checkbox" class="todo-check" '+(t.done?'checked':'')+' onchange="toggleTodoQ(\''+t.id+'\')"><span class="'+(t.done?'todo-done':'')+'">'+esc(t.text)+'</span><button class="todo-del" onclick="delTodoQ(\''+t.id+'\')">&times;</button></div>';
-    if(total>1)list.innerHTML+='<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px">还有 '+(total-1)+' 条待办</div>';
+    if(total>1)list.innerHTML+='<div style="font-size:11px;color:var(--primary);text-align:center;padding:6px;cursor:pointer;text-decoration:underline" onclick="switchView(\'todo\')">还有 '+(total-1)+' 条待办，点击查看</div>';
   }
   document.getElementById('todo-badge').textContent=done+'/'+total;
   document.getElementById('todo-progress-bar').style.width=(total?Math.round(done/total*100):0)+'%';
