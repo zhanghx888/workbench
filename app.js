@@ -1043,6 +1043,12 @@ function qdFmtHour(m){
   h=Math.round(h*10)/10;
   return h+'h';
 }
+// 目标时长按小时展示（按月维度用小时更直观，支持 0.5h）
+function qdFmtGoal(min){
+  var h=(min||0)/60;
+  h=Math.round(h*10)/10;
+  return h+'h';
+}
 function qdSpentOf(taskId,month){
   return qdSessions().reduce(function(s,x){
     if(x.taskId===taskId&&x.date&&x.date.indexOf(month)===0)s+=x.min||0;
@@ -1102,14 +1108,14 @@ function renderQdMatrix(){
     tasks.sort(function(a,b){return (a.done?1:0)-(b.done?1:0)||(b.mtime||0)-(a.mtime||0)});
     var spent=qdQuadSpent(quad,qdMonthStr());
     var goal=qdQuadGoal(quad);
-    var sumTxt='本月 '+qdFmtMin(spent)+(goal>0?' / 目标 '+qdFmtMin(goal):'');
+    var sumTxt='本月 '+qdFmtMin(spent)+(goal>0?' / 目标 '+qdFmtGoal(goal):'');
     html+='<div class="qd-card" style="border-top:3px solid '+m.hex+'">'+
       '<div class="qd-card-head"><span class="qd-dot" style="background:'+m.hex+'"></span>'+
       '<span class="n">'+m.name+'</span><span class="en">'+m.en+'</span>'+
       '<span class="sum">'+sumTxt+'</span></div>'+
       '<div class="qd-list" id="qd-list-'+quad+'"></div>'+
       '<div class="qd-addrow"><input type="text" id="qd-add-'+quad+'" placeholder="新任务…" onkeydown="if(event.key===\'Enter\')qdAdd(\''+quad+'\')">'+
-      '<input type="number" class="g" id="qd-goal-'+quad+'" placeholder="目标分钟" min="0">'+
+      '<input type="number" class="g" id="qd-goal-'+quad+'" placeholder="目标小时" min="0" step="0.5">'+
       '<button class="btn btn-sm" onclick="qdAdd(\''+quad+'\')">+</button></div></div>';
   });
   grid.innerHTML=html;
@@ -1125,7 +1131,7 @@ function qdRowHtml(t){
   var spent=qdSpentOf(t.id,month);
   var goal=t.goalMin||0;
   var pct=goal>0?Math.min(100,Math.round(spent/goal*100)):0;
-  var meta=(goal>0?'目标 '+qdFmtMin(goal)+' · ':'')+'本月 '+qdFmtMin(spent)+(spent>goal&&goal>0?' ⚠ 超目标':'');
+  var meta=(goal>0?'目标 '+qdFmtGoal(goal)+' · ':'')+'本月 '+qdFmtMin(spent)+(spent>goal&&goal>0?' ⚠ 超目标':'');
   var barColor=spent>goal&&goal>0?QD_META[0].hex:m.hex;
   var row='<div class="qd-row">'+
     '<div class="qd-row-top">'+
@@ -1148,7 +1154,7 @@ function qdEditHtml(t){
     '<h5>编辑任务</h5>'+
     '<div class="qd-ef"><label>任务名称</label><input type="text" id="qd-e-name" value="'+esc(t.name)+'"></div>'+
     '<div class="qd-ef"><label>所属象限</label><select id="qd-e-quad">'+opts+'</select></div>'+
-    '<div class="qd-ef"><label>目标分钟/月</label><input type="number" id="qd-e-goal" value="'+(t.goalMin||0)+'" min="0"></div>'+
+    '<div class="qd-ef"><label>目标小时/月</label><input type="number" id="qd-e-goal" value="'+((t.goalMin||0)/60)+'" min="0" step="0.5"></div>'+
     '<div class="qd-ef"><label>今日补记</label><input type="number" id="qd-e-manual" placeholder="补记今天投入的分钟数" min="1" style="flex:1">'+
     '<span style="font-size:11px;color:var(--text3)">（没用番茄钟的话在这里补）</span></div>'+
     '<div class="qd-ef-actions">'+
@@ -1167,7 +1173,7 @@ function qdAdd(quad){
   var i=document.getElementById('qd-add-'+quad);if(!i)return;
   var name=i.value.trim();if(!name)return;
   var g=document.getElementById('qd-goal-'+quad);
-  var goal=parseInt(g.value,10);if(!(goal>=0))goal=0;
+  var gh=parseFloat(g.value);var goal=(!isNaN(gh)&&gh>=0)?Math.round(gh*60):0;
   qdTasks().push({id:genId(),mtime:Date.now(),assignee:currentOwner,name:name,quadrant:Number(quad),goalMin:goal,done:false});
   saveData();renderQdMatrix();
 }
@@ -1182,11 +1188,11 @@ function qdEditSave(id){
   var t=qdTasks().find(function(x){return x.id===id});if(!t)return;
   var name=document.getElementById('qd-e-name').value.trim();
   var quad=parseInt(document.getElementById('qd-e-quad').value,10);
-  var goal=parseInt(document.getElementById('qd-e-goal').value,10);
+  var gh=parseFloat(document.getElementById('qd-e-goal').value);
   var manual=parseInt(document.getElementById('qd-e-manual').value,10);
   if(name)t.name=name;
   if(!isNaN(quad))t.quadrant=quad;
-  t.goalMin=(!isNaN(goal)&&goal>=0)?goal:0;
+  t.goalMin=(!isNaN(gh)&&gh>=0)?Math.round(gh*60):0;
   t.mtime=Date.now();
   var changed=t.quadrant;
   if(!isNaN(manual)&&manual>0){
@@ -1352,7 +1358,7 @@ function renderQdBubble(){
     if(rAct>0)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rAct+'" fill="'+d.hex+'" fill-opacity="0.85"/>';
     if(rAct>=12)s+='<text x="'+cx+'" y="'+Math.round(cy+rAct*0.35)+'" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700" style="font-family:inherit">'+qdFmtHour(d.spent)+'</text>';
     else if(spentH>0)s+='<text x="'+cx+'" y="'+Math.round(cy-rAct-8)+'" text-anchor="middle" fill="'+d.deep+'" font-size="12" font-weight="600" style="font-family:inherit">'+qdFmtHour(d.spent)+'</text>';
-    var goalTxt=qdQuadGoal(i)>0?'目标 '+qdFmtHour(d.goal):'';
+    var goalTxt=qdQuadGoal(i)>0?'目标 '+qdFmtGoal(d.goal):'';
     var gY=i<2?302:546;
     if(goalTxt)s+='<text x="'+cx+'" y="'+gY+'" text-anchor="middle" fill="#B8ABCD" font-size="11" style="font-family:inherit">'+goalTxt+'</text>';
   });
@@ -1362,7 +1368,7 @@ function renderQdBubble(){
   if(lg){
     lg.innerHTML=QD_META.map(function(m,i){
       return '<span><span class="qd-dot" style="background:'+m.hex+';display:inline-block;width:10px;height:10px;border-radius:3px"></span>'+m.name+
-      ' <b>'+qdFmtHour(qdQuadSpent(i,month))+'</b><span class="p">/ 目标 '+qdFmtHour(qdQuadGoal(i))+'</span></span>';
+      ' <b>'+qdFmtHour(qdQuadSpent(i,month))+'</b><span class="p">/ 目标 '+qdFmtGoal(qdQuadGoal(i))+'</span></span>';
     }).join('');
   }
 }
