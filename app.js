@@ -1311,6 +1311,13 @@ function renderQdStats(){
 function renderQdBubble(){
   var wrap=document.getElementById('qd-bubble-wrap');if(!wrap)return;
   var month=qdMonthStr();
+  var totalSpent=0,totalGoal=0;
+  QD_META.forEach(function(m,i){totalSpent+=qdQuadSpent(i,month);totalGoal+=qdQuadGoal(i);});
+  if(totalSpent===0&&totalGoal===0){
+    wrap.innerHTML='<div class="qd-empty-big"><span class="em">🧭</span>暂无数据<br>去「四象限任务」添加任务并启动番茄钟或手动补时<br>这里会显示气泡与目标对比</div>';
+    var lg=document.getElementById('qd-bubble-legend');if(lg)lg.innerHTML='';
+    return;
+  }
   var data=[];
   QD_META.forEach(function(m,i){
     var spent=qdQuadSpent(i,month),goal=qdQuadGoal(i);
@@ -1377,7 +1384,7 @@ function qdSmooth(pts){
 function renderQdArea(){
   var wrap=document.getElementById('qd-area-wrap');if(!wrap)return;
   var days=qdLast7Days();
-  var W=680,H=430,L=42,R=18,T=44,B=52;
+  var W=560,H=320,L=46,R=20,T=30,B=46;
   var dayMin=[];days.forEach(function(d){
     var dm=[0,0,0,0];
     qdSessions().forEach(function(x){
@@ -1386,6 +1393,12 @@ function renderQdArea(){
     });
     dayMin.push(dm);
   });
+  var totalAll=dayMin.reduce(function(s,d){return s+d.reduce(function(a,b){return a+b},0)},0);
+  if(totalAll===0){
+    wrap.innerHTML='<div class="qd-empty-big"><span class="em">📈</span>近 7 天还没有任何用时记录<br>完成几个任务、补记时长或跑完一个番茄钟后再来看</div>';
+    var lg=document.getElementById('qd-area-legend');if(lg)lg.innerHTML='';
+    return;
+  }
   var xs=days.map(function(d,i){return L+i*(W-L-R)/6});
   var goalDaily=qdTotalGoal()/30;
   var maxV=Math.max(2,goalDaily*1.25);
