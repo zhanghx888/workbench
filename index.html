@@ -766,6 +766,80 @@ select{
   .job-card-title{font-size:13px}
   .dog-care-tip{font-size:12px;padding:12px}
 }
+/* ===== Quadrant (四象限时间管理) ===== */
+.qd-tabs{margin-bottom:16px}
+.qd-monthbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.qd-nav-btn{width:30px;height:30px;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);border-radius:9px;cursor:pointer;font-size:16px;line-height:1}
+.qd-nav-btn:hover{background:var(--surface-alt);color:var(--primary)}
+.qd-month{font-size:15px;font-weight:700;min-width:110px;text-align:center}
+.qd-month-tip{font-size:11px;color:var(--text3);margin-left:6px}
+.qd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:900px){.qd-grid{grid-template-columns:1fr}}
+.qd-card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border-light);overflow:hidden;display:flex;flex-direction:column}
+.qd-card-head{display:flex;align-items:center;gap:8px;padding:13px 16px 11px;border-bottom:1.5px solid var(--border-light)}
+.qd-dot{width:11px;height:11px;border-radius:4px;flex:none}
+.qd-card-head .n{font-size:14.5px;font-weight:700}
+.qd-card-head .en{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:1px}
+.qd-card-head .sum{margin-left:auto;font-size:11.5px;color:var(--text2);font-weight:500;text-align:right}
+.qd-list{padding:6px 14px;flex:1}
+.qd-row{padding:9px 2px;border-bottom:1px dashed var(--border-light)}
+.qd-row:last-child{border-bottom:none}
+.qd-row-top{display:flex;align-items:flex-start;gap:8px}
+.qd-row-name{flex:1;font-size:13px;line-height:1.45;word-break:break-all}
+.qd-row-name small{display:block;font-size:11px;color:var(--text3);margin-top:1px}
+.qd-check{width:16px;height:16px;margin-top:2px;cursor:pointer;accent-color:var(--primary);flex:none}
+.qd-done{text-decoration:line-through;color:var(--text3)}
+.qd-bar{height:5px;background:var(--border-light);border-radius:3px;margin-top:7px;overflow:hidden}
+.qd-bar>i{display:block;height:100%;border-radius:3px}
+.qd-ops{display:flex;gap:5px;flex:none;align-items:center;margin-left:6px}
+.qd-op{width:24px;height:24px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:8px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:var(--transition)}
+.qd-op:hover{border-color:var(--primary);color:var(--primary)}
+.qd-op.red:hover{border-color:var(--danger);color:var(--danger)}
+.qd-pomo-btn{background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:4px 9px;font-size:11px;cursor:pointer;transition:var(--transition);white-space:nowrap}
+.qd-pomo-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.qd-addrow{display:flex;gap:6px;padding:10px 14px 14px;border-top:1.5px solid var(--border-light)}
+.qd-addrow input{flex:1;min-width:0}
+.qd-addrow .g{width:70px;flex:none}
+.qd-editbox{background:var(--surface-alt);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin:8px 2px 10px}
+.qd-editbox h5{font-size:12.5px;font-weight:700;margin-bottom:10px;color:var(--text2)}
+.qd-ef{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.qd-ef label{width:62px;flex:none;font-size:12px;color:var(--text2)}
+.qd-ef input,.qd-ef select{flex:1;min-width:0}
+.qd-ef-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.qd-empty{color:var(--text3);font-size:12px;padding:12px 2px}
+.qd-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+@media (max-width:600px){.qd-stat-row{grid-template-columns:repeat(2,1fr)}}
+.qd-stat{background:var(--surface);border:1.5px solid var(--border-light);border-radius:var(--radius-sm);padding:12px 14px}
+.qd-stat .l{font-size:11px;color:var(--text3);font-weight:500}
+.qd-stat .v{font-size:22px;font-weight:800;margin-top:2px;letter-spacing:-.5px}
+.qd-stat .d{font-size:10.5px;color:var(--text3);margin-top:2px}
+.qd-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text2);margin:10px 2px 2px}
+.qd-legend b{color:var(--text);font-weight:700}
+.qd-legend .p{color:var(--text3);font-size:11px}
+.qd-svg{width:100%;height:auto;display:block}
+.qd-card h3{font-size:14.5px;font-weight:700;margin-bottom:2px}
+.qd-card .sub{font-size:11.5px;color:var(--text3);margin-bottom:8px}
+.job-empty{color:var(--text3);font-size:12px;padding:14px 2px}
+.qd-job-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border-light);flex-wrap:wrap}
+.qd-job-item:last-child{border-bottom:none}
+.qd-job-main{flex:1;min-width:150px}
+.qd-job-co{font-size:13.5px;font-weight:700}
+.qd-job-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.qd-job-rev{width:100%;margin-top:8px;background:var(--surface-alt);border-radius:10px;padding:10px 12px}
+.qd-job-rev textarea{width:100%;min-height:64px;border:1.5px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);resize:vertical;outline:none}
+.qd-job-rev textarea:focus{border-color:var(--primary)}
+.qd-job-review-view{font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.qd-pomo-float{position:fixed;right:22px;bottom:22px;z-index:999;background:var(--surface);border:1.5px solid var(--primary);border-radius:var(--radius-sm);box-shadow:var(--shadow-md);padding:11px 14px;min-width:230px;display:none;font-family:inherit}
+.qd-pomo-float.show{display:block;animation:fadeIn .2s ease}
+.qd-pomo-task{font-size:12px;color:var(--text2);margin-bottom:3px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qd-pomo-time{font-size:26px;font-weight:800;letter-spacing:1px;color:var(--primary);font-variant-numeric:tabular-nums}
+.qd-pomo-acts{display:flex;gap:6px;margin-top:7px;align-items:center}
+.qd-status-chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;white-space:nowrap}
+.qd-funnel{display:flex;align-items:stretch;gap:4px;background:var(--surface);border:1.5px solid var(--border-light);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;flex-wrap:wrap}
+.qd-fstep{flex:1;min-width:70px;text-align:center;background:var(--surface-alt);border-radius:10px;padding:8px 4px}
+.qd-fstep .v{font-size:19px;font-weight:800}
+.qd-fstep .l{font-size:10.5px;color:var(--text3);margin-top:1px}
+.qd-farr{align-self:center;color:var(--text3);font-size:14px;padding:0 2px}
 </style>
 </head>
 <body>
@@ -853,6 +927,10 @@ select{
         <div class="sidebar-nav-item" data-view="fitness" onclick="switchView('fitness')">
           <span class="sidebar-nav-icon">💪</span>
           <span>运动</span>
+        </div>
+        <div class="sidebar-nav-item" data-view="quadrant" onclick="switchView('quadrant')">
+          <span class="sidebar-nav-icon">🧭</span>
+          <span>四象限</span>
         </div>
       </div>
     </div>
@@ -1076,6 +1154,65 @@ select{
       <!-- Will be dynamically rendered -->
     </div>
 
+    <!-- Quadrant Detail View (四象限时间管理) -->
+    <div class="detail-view" id="view-quadrant">
+      <div class="detail-header">
+        <span class="detail-title">🧭 四象限时间管理</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--text3);margin-right:4px">把时间花在重要的事上</span>
+        <div id="qd-owner-switch"></div>
+      </div>
+
+      <div class="pill-row qd-tabs">
+        <span class="pill active" id="qd-tab-matrix" onclick="qdSwitchTab('matrix')">四象限任务</span>
+        <span class="pill" id="qd-tab-stats" onclick="qdSwitchTab('stats')">用时分析</span>
+        <span class="pill" id="qd-tab-job" onclick="qdSwitchTab('job')">求职复盘</span>
+      </div>
+
+      <div class="qd-section" id="qd-sec-matrix">
+        <div class="qd-monthbar">
+          <button class="qd-nav-btn" onclick="qdNavMonth(-1)" title="上个月">‹</button>
+          <span class="qd-month" id="qd-month-label">2026年9月</span>
+          <button class="qd-nav-btn" onclick="qdNavMonth(1)" title="下个月">›</button>
+          <span class="qd-month-tip" id="qd-month-tip"></span>
+        </div>
+        <div class="qd-grid" id="qd-grid"></div>
+      </div>
+
+      <div class="qd-section" id="qd-sec-stats" style="display:none">
+        <div class="qd-stat-row" id="qd-stats-top"></div>
+        <div class="detail-card" style="margin-bottom:14px">
+          <h3>四象限用时分布</h3>
+          <div class="sub">横轴 = 紧急程度，纵轴 = 重要程度 · 实心气泡 = 本月实际用时，外圈虚线 = 目标用时</div>
+          <div id="qd-bubble-wrap"></div>
+          <div class="qd-legend" id="qd-bubble-legend"></div>
+        </div>
+        <div class="detail-card">
+          <h3>近 7 天用时趋势</h3>
+          <div class="sub">每条色带 = 一个象限 · 圆点上的数字 = 当天总投入 · 虚线 = 日均目标</div>
+          <div id="qd-area-wrap"></div>
+          <div class="qd-legend" id="qd-area-legend"></div>
+        </div>
+      </div>
+
+      <div class="qd-section" id="qd-sec-job" style="display:none">
+        <div class="qd-stat-row" id="qd-job-stats"></div>
+        <div class="qd-funnel" id="qd-job-funnel"></div>
+        <div class="detail-card" style="margin-bottom:14px">
+          <h3>添加投递</h3>
+          <div class="input-row" style="margin-top:10px">
+            <input type="text" id="qd-job-company" placeholder="公司名">
+            <input type="text" id="qd-job-position" placeholder="岗位（选填）">
+            <input type="text" id="qd-job-channel" placeholder="渠道（选填，如 BOSS/内推）" style="max-width:140px">
+            <button class="btn btn-sm" onclick="qdJobAdd()">添加</button>
+          </div>
+        </div>
+        <div class="detail-card">
+          <h3 style="display:flex;align-items:center;gap:8px">投递 / 面试记录 <span class="job-empty" style="padding:0" id="qd-job-count"></span></h3>
+          <div id="qd-job-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Accounting Detail View -->
     <div class="detail-view" id="view-accounting">
       <div class="detail-header">
@@ -1088,6 +1225,6 @@ select{
 </div>
 
 <script src="data.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
