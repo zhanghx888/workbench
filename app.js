@@ -1397,8 +1397,9 @@ function renderQdArea(){
     return;
   }
   var xs=days.map(function(d,i){return L+i*(W-L-R)/6});
-  var goalDaily=qdTotalGoal()/30;
-  var maxV=Math.max(2,goalDaily*1.25);
+  // 日均目标固定为 12 小时（用户要求定死）
+  var goalDailyH=12;
+  var maxV=Math.max(2,goalDailyH*1.25);
   dayMin.forEach(function(dm){var tot=dm.reduce(function(a,b){return a+b},0)/60;if(tot>maxV)maxV=tot;});
   var y=function(v){return H-B-(v/60)*(H-B-T)/maxV};
   // bands bottom->top: q3,q2,q1,q0
@@ -1435,10 +1436,10 @@ function renderQdArea(){
     s+='<text x="'+xs[i]+'" y="'+(H-B+20)+'" text-anchor="middle" fill="#7B6E8E" font-size="13" style="font-family:inherit">'+d.wd+'</text>'+
       '<text x="'+xs[i]+'" y="'+(H-B+36)+'" text-anchor="middle" fill="#B8ABCD" font-size="10.5" style="font-family:inherit">'+d.date.slice(5)+'</text>';
   });
-  if(goalDaily>0){
-    var ty=y(goalDaily*60);
+  if(goalDailyH>0){
+    var ty=y(goalDailyH*60);
     s+='<line x1="'+L+'" y1="'+ty+'" x2="'+(W-R)+'" y2="'+ty+'" stroke="#B8ABCD" stroke-width="1.2" stroke-dasharray="6 4"/>'+
-      '<text x="'+(W-R)+'" y="'+(ty-6)+'" text-anchor="end" fill="#B8ABCD" font-size="11" style="font-family:inherit">日均目标 '+qdFmtHour(goalDaily*60)+'</text>';
+      '<text x="'+(W-R)+'" y="'+(ty-6)+'" text-anchor="end" fill="#B8ABCD" font-size="11" style="font-family:inherit">日均目标 '+goalDailyH+'h</text>';
   }
   s+='</svg>';
   wrap.innerHTML=s;
