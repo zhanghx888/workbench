@@ -1018,17 +1018,14 @@ var QD_META=[
   {name:'紧急但不重要',en:'DELEGATE',hex:'#F5B84D',deep:'#D99A2B'},
   {name:'不重要且不紧急',en:'ELIMINATE',hex:'#B3A6CB',deep:'#8E7FB5'}
 ];
-var QJ_STATUS=['已投递','已约面','已面试','已通过','已拒绝','已拿offer'];
 var qdTab='matrix';
 var qdCalDate=new Date();
 var qdEditingId=null;
 var qdManualId=null;
-var qdJobOpenId=null;
 function qdMonthStr(){return qdCalDate.getFullYear()+'-'+String(qdCalDate.getMonth()+1).padStart(2,'0')}
 function qdMonthLabel(){return qdCalDate.getFullYear()+'年'+(qdCalDate.getMonth()+1)+'月'}
 function qdTasks(){return (DATA.quadrants&&DATA.quadrants.tasks)||[]}
 function qdSessions(){return (DATA.quadrants&&DATA.quadrants.sessions)||[]}
-function qdJobs(){return (DATA.quadrants&&DATA.quadrants.jobs)||[]}
 function qdMyTasks(){return qdTasks().filter(function(t){return t.assignee===currentOwner})}
 function qdIsCurMonth(){
   var n=new Date();return qdCalDate.getFullYear()===n.getFullYear()&&qdCalDate.getMonth()===n.getMonth();
@@ -1083,10 +1080,8 @@ function qdSwitchTab(t){
   document.querySelectorAll('.qd-tabs .pill').forEach(function(p){p.classList.toggle('active',p.id==='qd-tab-'+t)});
   document.getElementById('qd-sec-matrix').style.display=t==='matrix'?'':'none';
   document.getElementById('qd-sec-stats').style.display=t==='stats'?'':'none';
-  document.getElementById('qd-sec-job').style.display=t==='job'?'':'none';
   if(t==='matrix')renderQdMatrix();
   if(t==='stats')renderQdStats();
-  if(t==='job')renderQdJob();
 }
 function renderQuadrantView(){
   var os=document.getElementById('qd-owner-switch');
@@ -1453,98 +1448,6 @@ function renderQdArea(){
     }).join('');
   }
 }
-// ===== Job Recap Tab =====
-function qdJobCnt(st){
-  return qdJobs().filter(function(j){return j.status===st}).length;
-}
-function renderQdJob(){
-  var st=document.getElementById('qd-job-stats');if(!st)return;
-  var jobs=qdJobs().slice().sort(function(a,b){return (b.mtime||0)-(a.mtime||0)});
-  var total=jobs.length;
-  var invited=qdJobCnt('已约面')+qdJobCnt('已面试')+qdJobCnt('已通过')+qdJobCnt('已拿offer');
-  var interviewed=qdJobCnt('已面试')+qdJobCnt('已通过')+qdJobCnt('已拿offer');
-  var offer=qdJobCnt('已拿offer');
-  var inviteRate=total?Math.round(invited/total*100):0;
-  st.innerHTML=''+
-    '<div class="qd-stat"><div class="l">累计投递</div><div class="v">'+total+'</div><div class="d">家</div></div>'+
-    '<div class="qd-stat"><div class="l">面试邀约</div><div class="v">'+invited+'</div><div class="d">邀约率 '+inviteRate+'%</div></div>'+
-    '<div class="qd-stat"><div class="l">已完成面试</div><div class="v">'+interviewed+'</div><div class="d">家</div></div>'+
-    '<div class="qd-stat"><div class="l">Offer</div><div class="v" style="color:'+QD_META[1].deep+'">'+offer+'</div><div class="d">🎉</div></div>';
-  var fun=document.getElementById('qd-job-funnel');
-  if(fun){
-    fun.innerHTML=''+
-      '<div class="qd-fstep"><div class="v">'+total+'</div><div class="l">已投递</div></div>'+
-      '<div class="qd-farr">›</div>'+
-      '<div class="qd-fstep"><div class="v">'+invited+'</div><div class="l">面试邀约</div></div>'+
-      '<div class="qd-farr">›</div>'+
-      '<div class="qd-fstep"><div class="v">'+interviewed+'</div><div class="l">已完成面试</div></div>'+
-      '<div class="qd-farr">›</div>'+
-      '<div class="qd-fstep"><div class="v">'+offer+'</div><div class="l">Offer</div></div>';
-  }
-  var cnt=document.getElementById('qd-job-count');
-  if(cnt)cnt.textContent='共 '+total+' 条';
-  var list=document.getElementById('qd-job-list');if(!list)return;
-  if(!jobs.length){list.innerHTML='<div class="job-empty">还没有投递记录，添加第一条吧 ✨</div>';return}
-  list.innerHTML=jobs.map(function(j){
-    return qdJobRow(j);
-  }).join('');
-}
-function qdJobStatusColor(st){
-  var map={'已投递':'#B8ABCD','已约面':'#8E7FB5','已面试':'#D99A2B','已通过':'#2E9B6E','已拒绝':'#D8495C','已拿offer':'#2E9B6E'};
-  var bgmap={'已投递':'#F1EDF7','已约面':'#EFE9FA','已面试':'#FEF6E7','已通过':'#EAF9F1','已拒绝':'#FDEBEE','已拿offer':'#EAF9F1'};
-  return 'style="background:'+bgmap[st]+';color:'+(map[st]||'#7B6E8E')+'"';
-}
-function qdJobRow(j){
-  var open=qdJobOpenId===j.id;
-  var opts=QJ_STATUS.map(function(s){return '<option'+(s===j.status?' selected':'')+'>'+s+'</option>'}).join('');
-  var html='<div class="qd-job-item">'+
-    '<div class="qd-job-main">'+
-    '<div class="qd-job-co">'+esc(j.company)+(j.position?'<span style="color:var(--text2);font-weight:600;font-size:12.5px"> · '+esc(j.position)+'</span>':'')+'</div>'+
-    '<div class="qd-job-meta">'+(j.date||'')+(j.channel?' · '+esc(j.channel):'')+(j.round?' · '+esc(j.round):'')+(j.interviewDate?' · 面试 '+j.interviewDate:'')+'</div>'+
-    '</div>'+
-    '<select class="pill" style="border-radius:12px" onchange="qdJobSetStatus(\''+j.id+'\',this.value)">'+opts+'</select>'+
-    '<button class="qd-op" style="width:auto;padding:0 10px" onclick="qdJobToggleOpen(\''+j.id+'\')" title="复盘">📝 复盘</button>'+
-    '<button class="qd-op red" onclick="qdJobDel(\''+j.id+'\')" title="删除">✕</button></div>';
-  if(open){
-    html+='<div class="qd-job-rev">'+
-      '<div class="qd-ef"><label>轮次/时间</label><input type="text" id="qd-r-round" placeholder="如：一面 · 9月8日 14:00" value="'+(j.round?esc(j.round):'')+'"></div>'+
-      '<div class="qd-ef"><label>复盘内容</label></div>'+
-      '<textarea id="qd-r-review" placeholder="问了什么 / 答得怎么样 / 下次怎么改进…">'+esc(j.review||'')+'</textarea>'+
-      '<div class="qd-ef-actions" style="margin-top:8px">'+
-      '<button class="btn btn-sm" onclick="qdJobSaveReview(\''+j.id+'\')">保存复盘</button>'+
-      '<button class="btn btn-sm btn-ghost" onclick="qdJobOpenId=null;renderQdJob()">收起</button></div></div>';
-  }else if(j.review){
-    html+='<div class="qd-job-rev"><div class="qd-job-review-view">'+esc(j.review)+'</div></div>';
-  }
-  return html;
-}
-function qdJobAdd(){
-  var c=document.getElementById('qd-job-company');if(!c)return;
-  var name=c.value.trim();if(!name)return;
-  var p=document.getElementById('qd-job-position'),ch=document.getElementById('qd-job-channel');
-  qdJobs().push({id:genId(),mtime:Date.now(),company:name,position:p.value.trim(),channel:ch.value.trim(),date:today(),status:'已投递',review:''});
-  saveData();c.value='';p.value='';ch.value='';renderQdJob();
-  qdPomoToast('已记录投递 '+name);
-}
-function qdJobSetStatus(id,st){
-  var j=qdJobs().find(function(x){return x.id===id});
-  if(j){j.status=st;j.mtime=Date.now();saveData();renderQdJob();}
-}
-function qdJobToggleOpen(id){qdJobOpenId=(qdJobOpenId===id)?null:id;renderQdJob()}
-function qdJobSaveReview(id){
-  var j=qdJobs().find(function(x){return x.id===id});if(!j)return;
-  var rr=document.getElementById('qd-r-round'),rv=document.getElementById('qd-r-review');
-  j.round=rr?rr.value.trim():j.round;
-  j.review=rv?rv.value.trim():j.review;
-  j.mtime=Date.now();saveData();qdJobOpenId=null;renderQdJob();
-  qdPomoToast('复盘已保存');
-}
-function qdJobDel(id){
-  markRemoved('quadrants:jobs',id);
-  qdJobs().splice(qdJobs().findIndex(function(x){return x.id===id}),1);
-  qdJobOpenId=null;saveData();renderQdJob();
-}
-
 // ===== Init =====
 updateSidebarDate();
 loadData().then(function(){
