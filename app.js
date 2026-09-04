@@ -1320,38 +1320,40 @@ function renderQdBubble(){
   });
   var view='0 0 680 600';
   var s='<svg viewBox="'+view+'" class="qd-svg" role="img" aria-label="四象限用时分布气泡图">';
-  var tl=110,tr=375,tb=110; // margins
-  // zone rects: top y 110..340, bottom 340..570 ; left 90..375 right 375..660
-  var zones=[[375,110,285,230,1],[90,110,285,230,0],[375,340,285,230,3],[90,340,285,230,2]];
+  // 四个象限格子：左上/右上/右下/左下
+  var zones=[[375,110,285,230,1],[90,110,285,230,0],[375,340,285,230,2],[90,340,285,230,3]];
   zones.forEach(function(z){
     s+='<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" fill="'+data[z[4]].hex+'" fill-opacity="0.08"/>';
   });
-  s+='<line x1="375" y1="110" x2="375" y2="570" stroke="#00000024" stroke-width="1"/>';
-  s+='<line x1="90" y1="340" x2="660" y2="340" stroke="#00000024" stroke-width="1"/>';
-  s+='<text x="375" y="592" text-anchor="middle" fill="#B8ABCD" font-size="12" style="font-family:inherit">紧急程度</text>';
-  s+='<text x="375" y="96" text-anchor="middle" fill="#B8ABCD" font-size="11" style="font-family:inherit">重要程度 ↑</text>';
-  // quadrant labels (fixed order q0 TR, q1 TL, q2 BR, q3 BL)
-  var labels=[[1,385,126,405,146],[0,100,126,112,146],[2,385,366,405,386],[3,100,366,112,386]];
+  s+='<line x1="375" y1="110" x2="375" y2="570" stroke="#B8ABCD" stroke-opacity="0.5" stroke-width="1"/>';
+  s+='<line x1="90" y1="340" x2="660" y2="340" stroke="#B8ABCD" stroke-opacity="0.5" stroke-width="1"/>';
+  // 坐标轴端点标签（参考设计图四角）
+  s+='<text x="375" y="98" text-anchor="middle" fill="#B8ABCD" font-size="12" style="font-family:inherit">高重要</text>';
+  s+='<text x="60" y="340" text-anchor="middle" fill="#B8ABCD" font-size="12" transform="rotate(-90 60 340)" style="font-family:inherit">重要程度</text>';
+  s+='<text x="120" y="588" text-anchor="middle" fill="#B8ABCD" font-size="12" style="font-family:inherit">低紧急</text>';
+  s+='<text x="630" y="588" text-anchor="middle" fill="#B8ABCD" font-size="12" style="font-family:inherit">高紧急</text>';
+  s+='<text x="375" y="588" text-anchor="middle" fill="#888780" font-size="13" font-weight="500" style="font-family:inherit">紧急程度</text>';
+  // 象限标签：每格左上角 圆点+名称+英文小标
+  var labels=[[1,395,132,418,154],[0,110,132,133,154],[2,395,386,418,408],[3,110,386,133,408]];
   labels.forEach(function(L){
     var m=QD_META[L[0]];
-    s+='<circle cx="'+L[1]+'" cy="'+(L[3]-6)+'" r="4" fill="'+m.hex+'"/>'+
-      '<text x="'+L[2]+'" y="'+(L[3]-2)+'" fill="'+m.deep+'" font-size="13.5" font-weight="700" style="font-family:inherit">'+m.name+'</text>'+
-      '<text x="'+L[1]+'" y="'+(L[4]+4)+'" fill="#7B6E8E" font-size="11" style="font-family:inherit">'+m.en+'</text>';
+    s+='<circle cx="'+L[1]+'" cy="'+L[2]+'" r="6.5" fill="'+m.hex+'" stroke="#ffffff" stroke-width="1.5"/>'+
+      '<text x="'+L[3]+'" y="'+(L[2]+5)+'" fill="'+m.deep+'" font-size="14" font-weight="700" style="font-family:inherit">'+m.name+'</text>'+
+      '<text x="'+L[1]+'" y="'+L[4]+'" fill="#7B6E8E" font-size="11" style="font-family:inherit">'+m.en+'</text>';
   });
-  var centers=[[517.5,225],[232.5,225],[517.5,455],[232.5,455]];
+  // 气泡中心：按象限的实际位置放置（与 zones/labels 一致）
+  var centers=[[232.5,225],[517.5,225],[517.5,455],[232.5,455]];
   data.forEach(function(d,i){
     var cx=centers[i][0],cy=centers[i][1];
     var spentH=d.spent/60,goalH=d.goal/60;
-    var rAct=spentH>0?Math.min(46,8.6*Math.sqrt(spentH)):0;
-    var rGoal=goalH>0?Math.min(86,8.6*Math.sqrt(goalH)):0;
-    if(rGoal>0)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rGoal+'" fill="none" stroke="'+d.hex+'" stroke-width="1.6" stroke-dasharray="5 4"/>';
-    if(rAct>0)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rAct+'" fill="'+d.hex+'"/>';
-    var labelY=cy+(rAct>0?Math.max(15,rAct*0.62):0);
-    if(rAct>=11)s+='<text x="'+cx+'" y="'+Math.round(cy+rAct*0.35)+'" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" style="font-family:inherit">'+qdFmtHour(d.spent)+'</text>';
-    else if(spentH>0)s+='<text x="'+cx+'" y="'+Math.round(cy-rAct-6)+'" text-anchor="middle" fill="'+d.deep+'" font-size="11.5" font-weight="600" style="font-family:inherit">'+qdFmtHour(d.spent)+'</text>';
+    var rAct=spentH>0?Math.min(44,8.6*Math.sqrt(spentH)):0;
+    var rGoal=goalH>0?Math.min(78,8.6*Math.sqrt(goalH)):0;
+    if(rGoal>0)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rGoal+'" fill="none" stroke="'+d.hex+'" stroke-width="1.5" stroke-dasharray="5 4" stroke-opacity="0.7"/>';
+    if(rAct>0)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rAct+'" fill="'+d.hex+'" fill-opacity="0.85"/>';
+    if(rAct>=12)s+='<text x="'+cx+'" y="'+Math.round(cy+rAct*0.35)+'" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700" style="font-family:inherit">'+qdFmtHour(d.spent)+'</text>';
+    else if(spentH>0)s+='<text x="'+cx+'" y="'+Math.round(cy-rAct-8)+'" text-anchor="middle" fill="'+d.deep+'" font-size="12" font-weight="600" style="font-family:inherit">'+qdFmtHour(d.spent)+'</text>';
     var goalTxt=qdQuadGoal(i)>0?'目标 '+qdFmtHour(d.goal):'';
-    var gY=0;
-    if(i===0)gY=326;else if(i===1)gY=326;else gY=556;
+    var gY=i<2?302:546;
     if(goalTxt)s+='<text x="'+cx+'" y="'+gY+'" text-anchor="middle" fill="#B8ABCD" font-size="11" style="font-family:inherit">'+goalTxt+'</text>';
   });
   s+='</svg>';
