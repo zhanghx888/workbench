@@ -224,7 +224,7 @@ var GIST_FILE='workbench-data-v3.json';
 
 // ===== Utilities =====
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function hexToRgba(hex,a){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return 'rgba('+r+','+g+','+b+','+a+')'}
 function diffDays(d1,d2){return Math.ceil((new Date(d2)-new Date(d1))/(86400000))}
 
